@@ -11,7 +11,7 @@ import {
   useSensors,
 } from "@dnd-kit/core";
 
-import { arrayMove, sortableKeyboardCoordinates } from "@dnd-kit/sortable";
+import { sortableKeyboardCoordinates } from "@dnd-kit/sortable";
 import { SortableContext } from "@dnd-kit/sortable";
 import { useState } from "react";
 import { verticalListSortingStrategy } from "@dnd-kit/sortable";
@@ -29,10 +29,12 @@ export type DataNode = CommonItemProperties & { data: string };
 export type ItemType = MultipleNodes | DataNode;
 
 const StyledContainer = styled.div`
+  width: 80vw;
+  margin: auto;
   padding: 20px;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 10px;
 `;
 
 const App = () => {
@@ -96,13 +98,8 @@ const App = () => {
 
     let updatedItems = [...items];
 
-    // fetching active item
+    // getting active item
     const activePath: string = active.data.current?.["path"] || "";
-    if (isDragingInsideParent(overId, activePath)) {
-      return;
-    }
-
-    // getting overItem item
     const activePathIdsArray = activePath.split(":");
 
     if (!activePathIdsArray.length) {
@@ -136,6 +133,10 @@ const App = () => {
       }
     });
 
+    if (isDragingInsideParent(overId, activePath)) {
+      return;
+    }
+
     // edge case (avoid handling drag over for child nodes)
     if (
       "nodes" in activeItem &&
@@ -144,7 +145,7 @@ const App = () => {
       return;
     }
 
-    debugger;
+    // debugger;
     // is dragged over multiple nodes
     if (overItem && "nodes" in overItem) {
       // put it in the new sub item
@@ -173,7 +174,8 @@ const App = () => {
     }
     // item to add to is in root
     else {
-      updatedItems.unshift(activeItem);
+      const overIndex = updatedItems.findIndex((item) => item.id === overId);
+      updatedItems.splice(overIndex, 0, activeItem);
     }
 
     // Deleting from old place
@@ -254,7 +256,7 @@ const App = () => {
           })}
         </StyledContainer>
       </SortableContext>
-      <DragOverlay>{getDragOverlay()}</DragOverlay>
+      {/* <DragOverlay>{getDragOverlay()}</DragOverlay> */}
     </DndContext>
   );
 };

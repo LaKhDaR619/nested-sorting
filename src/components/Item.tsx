@@ -8,6 +8,9 @@ interface SortableItemProps {
 
 const StyledContainer = styled.div`
   background-color: lightsalmon;
+  padding: 10px;
+  border: 2px solid blueviolet;
+  border-radius: 8px;
 `;
 
 const Item: React.FC<PropsWithChildren<SortableItemProps>> = ({ title }) => {

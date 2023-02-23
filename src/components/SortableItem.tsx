@@ -8,9 +8,7 @@ interface SortableItemProps {
   parentPath: string;
 }
 
-const StyledContainer = styled.div`
-  background-color: lightsalmon;
-`;
+const StyledContainer = styled.div``;
 
 const SortableItem: React.FC<PropsWithChildren<SortableItemProps>> = ({
   id,

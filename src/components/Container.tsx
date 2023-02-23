@@ -17,7 +17,9 @@ const StyledContainer = styled.div`
   padding: 20px;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 10px;
+  border: 2px solid yellowgreen;
+  border-radius: 8px;
 `;
 
 const Container: React.FC<PropsWithChildren<SortableContainerProps>> = ({
@@ -29,7 +31,7 @@ const Container: React.FC<PropsWithChildren<SortableContainerProps>> = ({
 
   return (
     <StyledContainer>
-      <span>{`Container ${path}`}</span>
+      <span>{`Container ${id}`}</span>
       {nodes.map((item) => {
         if ("nodes" in item) {
           return (
