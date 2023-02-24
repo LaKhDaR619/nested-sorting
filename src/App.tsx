@@ -61,9 +61,19 @@ const App = () => {
 
     // item is inside root
     if (pathIdsArray.length === 1) {
-      return Boolean(items.find((item) => item.id === overId));
+      return Boolean(
+        items.find((item) => {
+          return (
+            // if the over item is a sibling
+            item.id === overId &&
+            // and not a container
+            !("nodes" in item)
+          );
+        })
+      );
     }
 
+    // item is in a nested container
     let parent: MultipleNodes | undefined = items.find(
       (item) => item.id === pathIdsArray[0]
     ) as MultipleNodes;
@@ -75,7 +85,14 @@ const App = () => {
 
     if (
       parent?.id === overId ||
-      parent.nodes.find((node) => node.id === overId)
+      parent.nodes.find((item) => {
+        return (
+          // if the over item is a sibling
+          item.id === overId &&
+          // and not a container
+          !("nodes" in item)
+        );
+      })
     ) {
       return true;
     }
@@ -101,7 +118,6 @@ const App = () => {
     // getting active item
     const activePath: string = active.data.current?.["path"] || "";
     const activePathIdsArray = activePath.split(":");
-
     if (!activePathIdsArray.length) {
       return;
     }
@@ -145,7 +161,6 @@ const App = () => {
       return;
     }
 
-    // debugger;
     // is dragged over multiple nodes
     if (overItem && "nodes" in overItem) {
       // put it in the new sub item
