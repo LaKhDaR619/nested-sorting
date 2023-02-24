@@ -12,16 +12,18 @@ export const getItemAndParentByPath = (
   if (!pathIdsArray.length) {
     return null;
   }
-  let searchedItem: ItemType = items.find(
-    (item) => item.id === pathIdsArray[0]
-  )!;
+  let searchedItem = items.find((item) => item.id === pathIdsArray[0]);
   let parent: ItemType | null = null;
   pathIdsArray.slice(1).forEach((id) => {
-    if ("nodes" in searchedItem) {
+    if (searchedItem && "nodes" in searchedItem) {
       parent = searchedItem;
       searchedItem = searchedItem.nodes.find((item) => item.id === id)!;
     }
   });
+
+  if (!searchedItem) {
+    return null;
+  }
 
   return { parent, item: searchedItem };
 };
