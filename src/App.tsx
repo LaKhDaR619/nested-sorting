@@ -6,6 +6,7 @@ import {
   DragStartEvent,
   KeyboardSensor,
   PointerSensor,
+  rectIntersection,
   useSensor,
   useSensors,
 } from "@dnd-kit/core";
@@ -175,7 +176,7 @@ const App = () => {
     <DndContext
       // announcements={defaultAnnouncements}
       sensors={sensors}
-      collisionDetection={closestCenter}
+      collisionDetection={rectIntersection}
       onDragStart={handleDragStart}
       onDragOver={handleDragOver}
       onDragEnd={handleDragEnd}
