@@ -152,3 +152,21 @@ export const moveNestedItem = (
 
   return JSON.parse(JSON.stringify(items));
 };
+
+export const isDraggingOverDescendants = (
+  item: ItemType,
+  overId: string
+): boolean => {
+  // if we found the item
+  if (item.id === overId) {
+    return true;
+  }
+
+  // if we are in a single node and it isn't the overId
+  if (!("nodes" in item)) {
+    return false;
+  }
+
+  // didn't find keep checking
+  return item.nodes.some((node) => isDraggingOverDescendants(node, overId));
+};

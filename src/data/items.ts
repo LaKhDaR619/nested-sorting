@@ -5,7 +5,7 @@ const defaultItems: ItemType[] = [
   {
     id: "2",
     nodes: [
-      // { id: "6", data: "item 6" },
+      { id: "6", data: "item 6" },
       // { id: "7", data: "item 7" },
     ],
   },

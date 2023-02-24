@@ -22,6 +22,7 @@ import styled from "styled-components";
 import Container from "./components/Container";
 import {
   getItemAndParentByPath,
+  isDraggingOverDescendants,
   isDragingInsideParent,
   moveNestedItem,
 } from "./helpers";
@@ -99,7 +100,7 @@ const App = () => {
     // edge case (avoid handling drag over for child nodes)
     if (
       "nodes" in activeItem &&
-      activeItem.nodes.find((node) => node.id === overId)
+      isDraggingOverDescendants(activeItem, overId)
     ) {
       return;
     }
@@ -141,6 +142,14 @@ const App = () => {
       return;
     }
     const { item: overItem, parent: overParent } = overResult;
+
+    // edge case (avoid handling drag over for child nodes)
+    if (
+      "nodes" in activeItem &&
+      isDraggingOverDescendants(activeItem, overId)
+    ) {
+      return;
+    }
 
     updatedItems = moveNestedItem(
       updatedItems,
