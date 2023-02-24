@@ -21,6 +21,7 @@ import Item from "./components/Item";
 import defaultItems from "./data/items";
 import styled from "styled-components";
 import Container from "./components/Container";
+import { getItemAndParentByPath, isDragingInsideParent } from "./helpers";
 
 type CommonItemProperties = { id: string };
 export type MultipleNodes = CommonItemProperties & { nodes: ItemType[] };
@@ -56,50 +57,6 @@ const App = () => {
     return <Item id={activeId} title={activeItem?.data} />;
   };
 
-  const isDragingInsideParent = (overId: string, path: string) => {
-    const pathIdsArray = path.split(":");
-
-    // item is inside root
-    if (pathIdsArray.length === 1) {
-      return Boolean(
-        items.find((item) => {
-          return (
-            // if the over item is a sibling
-            item.id === overId &&
-            // and not a container
-            !("nodes" in item)
-          );
-        })
-      );
-    }
-
-    // item is in a nested container
-    let parent: MultipleNodes | undefined = items.find(
-      (item) => item.id === pathIdsArray[0]
-    ) as MultipleNodes;
-    pathIdsArray.slice(1, -1).forEach((id) => {
-      if (parent && "nodes" in parent) {
-        parent = parent.nodes.find((node) => node.id === id) as MultipleNodes;
-      }
-    });
-
-    if (
-      parent?.id === overId ||
-      parent.nodes.find((item) => {
-        return (
-          // if the over item is a sibling
-          item.id === overId &&
-          // and not a container
-          !("nodes" in item)
-        );
-      })
-    ) {
-      return true;
-    }
-
-    return false;
-  };
-
   const handleDragStart = (event: DragStartEvent) => {
     const { active } = event;
     setActiveId(active.id.toString());
@@ -117,39 +74,22 @@ const App = () => {
 
     // getting active item
     const activePath: string = active.data.current?.["path"] || "";
-    const activePathIdsArray = activePath.split(":");
-    if (!activePathIdsArray.length) {
+    const activeResult = getItemAndParentByPath(updatedItems, activePath);
+    if (!activeResult) {
       return;
     }
-    let activeItem: ItemType = updatedItems.find(
-      (item) => item.id === activePathIdsArray[0]
-    )!;
-    let activeParent: ItemType | null = null;
-    activePathIdsArray.slice(1).forEach((id) => {
-      if ("nodes" in activeItem) {
-        activeParent = activeItem;
-        activeItem = activeItem.nodes.find((item) => item.id === id)!;
-      }
-    });
+    const { item: activeItem, parent: activeParent } = activeResult;
 
     // getting overItem item
     const overPath: string = over?.data.current?.["path"] || "";
-    const overPathIdsArray = overPath.split(":");
-    if (!overPathIdsArray.length) {
+    const overResult = getItemAndParentByPath(updatedItems, overPath);
+    if (!overResult) {
       return;
     }
-    let overItem: ItemType = updatedItems.find(
-      (item) => item.id === overPathIdsArray[0]
-    )!;
-    let overParent: ItemType | null = null;
-    overPathIdsArray.slice(1).forEach((id) => {
-      if (overItem && "nodes" in overItem) {
-        overParent = overItem;
-        overItem = overItem.nodes.find((item) => item.id === id)!;
-      }
-    });
+    const { item: overItem, parent: overParent } = overResult;
 
-    if (isDragingInsideParent(overId, activePath)) {
+    // we ignore dragging inside parent (just a sorting action)
+    if (isDragingInsideParent(updatedItems, overId, activePath)) {
       return;
     }
 
@@ -164,7 +104,8 @@ const App = () => {
     // is dragged over multiple nodes
     if (overItem && "nodes" in overItem) {
       // put it in the new sub item
-      overItem.nodes.unshift(activeItem);
+      const overIndex = overItem.nodes.findIndex((node) => node.id === overId);
+      overItem.nodes.splice(overIndex, 0, activeItem);
 
       // delete old active item
       if (activeParent) {
@@ -183,9 +124,9 @@ const App = () => {
 
     // is dragged over single node
     // Adding to new place
-    const castedOverParent = overParent as unknown as MultipleNodes;
-    if (castedOverParent && "nodes" in castedOverParent) {
-      castedOverParent.nodes.unshift(activeItem);
+    if (overParent && "nodes" in overParent) {
+      const overIndex = updatedItems.findIndex((item) => item.id === overId);
+      overParent.nodes.splice(overIndex, 0, activeItem);
     }
     // item to add to is in root
     else {
@@ -208,23 +149,30 @@ const App = () => {
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
-    // const { active, over } = event;
-    // const { id } = active;
-    // let overId: string;
-    // if (over) {
-    //   overId = over.id.toString();
-    // }
+    const { active, over } = event;
+    const activeId = active.id.toString();
+    const overId = over?.id.toString();
 
-    // const activeIndex = items.findIndex((item) => item.id === id);
-    // const overIndex = items.findIndex((item) => item.id === overId);
+    const updatedItems = [...items];
 
-    // let newIndex = overIndex >= 0 ? overIndex : 0;
+    // getting active item
+    const activePath: string = active.data.current?.["path"] || "";
+    const activeResult = getItemAndParentByPath(updatedItems, activePath);
+    if (!activeResult) {
+      return;
+    }
+    const { item: activeItem, parent: activeParent } = activeResult;
 
-    // if (activeIndex !== overIndex) {
-    //   setItems((prev) => arrayMove(prev, activeIndex, newIndex));
-    // }
+    // getting overItem item
+    const overPath: string = over?.data.current?.["path"] || "";
+    const overResult = getItemAndParentByPath(updatedItems, overPath);
+    if (!overResult) {
+      return;
+    }
+    const { item: overItem, parent: overParent } = overResult;
 
     setActiveId(null);
+    setItems(JSON.parse(JSON.stringify(updatedItems)));
   };
 
   const sensors = useSensors(
