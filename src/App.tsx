@@ -3,7 +3,6 @@ import {
   DndContext,
   DragEndEvent,
   DragOverEvent,
-  DragOverlay,
   DragStartEvent,
   KeyboardSensor,
   PointerSensor,
@@ -21,7 +20,11 @@ import Item from "./components/Item";
 import defaultItems from "./data/items";
 import styled from "styled-components";
 import Container from "./components/Container";
-import { getItemAndParentByPath, isDragingInsideParent } from "./helpers";
+import {
+  getItemAndParentByPath,
+  isDragingInsideParent,
+  moveNestedItem,
+} from "./helpers";
 
 type CommonItemProperties = { id: string };
 export type MultipleNodes = CommonItemProperties & { nodes: ItemType[] };
@@ -101,59 +104,27 @@ const App = () => {
       return;
     }
 
-    // is dragged over multiple nodes
-    if (overItem && "nodes" in overItem) {
-      // put it in the new sub item
-      const overIndex = overItem.nodes.findIndex((node) => node.id === overId);
-      overItem.nodes.splice(overIndex, 0, activeItem);
-
-      // delete old active item
-      if (activeParent) {
-        (activeParent as MultipleNodes).nodes = (
-          activeParent as MultipleNodes
-        ).nodes.filter((item) => item.id !== activeId);
-      }
-      // item is in root
-      else {
-        updatedItems = updatedItems.filter((item) => item.id !== activeId);
-      }
-
-      setItems(JSON.parse(JSON.stringify(updatedItems)));
-      return;
-    }
-
-    // is dragged over single node
-    // Adding to new place
-    if (overParent && "nodes" in overParent) {
-      const overIndex = updatedItems.findIndex((item) => item.id === overId);
-      overParent.nodes.splice(overIndex, 0, activeItem);
-    }
-    // item to add to is in root
-    else {
-      const overIndex = updatedItems.findIndex((item) => item.id === overId);
-      updatedItems.splice(overIndex, 0, activeItem);
-    }
-
-    // Deleting from old place
-    if (activeParent) {
-      (activeParent as MultipleNodes).nodes = (
-        activeParent as MultipleNodes
-      ).nodes.filter((item) => item.id !== activeId);
-    }
-    // item to delete is in root
-    else {
-      updatedItems = updatedItems.filter((item) => item.id !== activeId);
-    }
-
-    setItems(JSON.parse(JSON.stringify(updatedItems)));
+    updatedItems = moveNestedItem(
+      updatedItems,
+      activeId,
+      overId,
+      activeItem,
+      overItem,
+      activeParent,
+      overParent
+    );
+    setItems(updatedItems);
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     const activeId = active.id.toString();
     const overId = over?.id.toString();
+    if (!activeId || !overId || activeId === overId) {
+      return;
+    }
 
-    const updatedItems = [...items];
+    let updatedItems = [...items];
 
     // getting active item
     const activePath: string = active.data.current?.["path"] || "";
@@ -171,8 +142,17 @@ const App = () => {
     }
     const { item: overItem, parent: overParent } = overResult;
 
+    updatedItems = moveNestedItem(
+      updatedItems,
+      activeId,
+      overId,
+      activeItem,
+      overItem,
+      activeParent,
+      overParent
+    );
+    setItems(updatedItems);
     setActiveId(null);
-    setItems(JSON.parse(JSON.stringify(updatedItems)));
   };
 
   const sensors = useSensors(
