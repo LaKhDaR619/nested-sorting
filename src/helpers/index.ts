@@ -172,3 +172,22 @@ export const isDraggingOverDescendants = (
   // didn't find keep checking
   return item.nodes.some((node) => isDraggingOverDescendants(node, overId));
 };
+
+export const getNestedItem = (
+  item: ItemType,
+  id: string | null
+): ItemType | null => {
+  if (!id) {
+    return null;
+  }
+
+  if (item.id === id) {
+    return item;
+  }
+
+  if ("nodes" in item) {
+    return item.nodes.find((node) => getNestedItem(node, id)) || null;
+  }
+
+  return null;
+};

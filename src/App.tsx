@@ -1,11 +1,12 @@
 import {
+  closestCenter,
   DndContext,
   DragEndEvent,
   DragOverEvent,
+  DragOverlay,
   DragStartEvent,
   KeyboardSensor,
   PointerSensor,
-  rectIntersection,
   useSensor,
   useSensors,
 } from "@dnd-kit/core";
@@ -22,7 +23,7 @@ import styled from "styled-components";
 import Container from "./components/Container";
 import {
   getItemAndParentByPath,
-  isDraggingOverDescendants,
+  getNestedItem,
   isDragingInsideParent,
   moveNestedItem,
 } from "./helpers";
@@ -47,18 +48,12 @@ const App = () => {
   const [activeId, setActiveId] = useState<string | null>(null);
 
   const getDragOverlay = () => {
-    const activeItem = items.find((item) => item.id === activeId);
+    const activeItem = getNestedItem({ id: "", nodes: items }, activeId);
     if (!activeId || !activeItem) {
       return null;
     }
 
-    if ("nodes" in activeItem) {
-      return (
-        <Container id={activeItem.id} nodes={activeItem.nodes} parentPath="" />
-      );
-    }
-
-    return <Item id={activeId} title={activeItem?.data} />;
+    return <Item id={activeId} title={`Item ${activeId}`} />;
   };
 
   const handleDragStart = (event: DragStartEvent) => {
@@ -99,8 +94,8 @@ const App = () => {
 
     // edge case (avoid handling drag over for child nodes)
     if (
-      "nodes" in activeItem &&
-      isDraggingOverDescendants(activeItem, overId)
+      "nodes" in activeItem
+      // && isDraggingOverDescendants(activeItem, overId)
     ) {
       return;
     }
@@ -146,7 +141,8 @@ const App = () => {
     // edge case (avoid handling drag over for child nodes)
     if (
       "nodes" in activeItem &&
-      isDraggingOverDescendants(activeItem, overId)
+      activeParent?.id !== overParent?.id
+      // isDraggingOverDescendants(activeItem, overId)
     ) {
       return;
     }
@@ -173,9 +169,7 @@ const App = () => {
 
   return (
     <DndContext
-      // announcements={defaultAnnouncements}
       sensors={sensors}
-      collisionDetection={rectIntersection}
       onDragStart={handleDragStart}
       onDragOver={handleDragOver}
       onDragEnd={handleDragEnd}
@@ -208,7 +202,7 @@ const App = () => {
           })}
         </StyledContainer>
       </SortableContext>
-      {/* <DragOverlay>{getDragOverlay()}</DragOverlay> */}
+      <DragOverlay>{getDragOverlay()}</DragOverlay>
     </DndContext>
   );
 };
