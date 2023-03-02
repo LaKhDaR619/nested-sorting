@@ -79,12 +79,17 @@ export const moveNestedItem = (
     }
 
     // if we need to put it next to the container
-    if (addNextTo) {
+    if (addNextTo === "before") {
       if (overParent) {
-        // if(addNextTo === '')
         overParent.nodes.unshift(activeItem);
       } else {
         items.unshift(activeItem);
+      }
+    } else if (addNextTo === "after") {
+      if (overParent) {
+        overParent.nodes.push(activeItem);
+      } else {
+        items.push(activeItem);
       }
     }
     // add it to the dragged over container
