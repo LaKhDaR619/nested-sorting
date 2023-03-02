@@ -1,6 +1,8 @@
+import { throttle } from "lodash";
 import {
   DndContext,
   DragEndEvent,
+  DragMoveEvent,
   DragOverEvent,
   DragOverlay,
   DragStartEvent,
@@ -56,62 +58,10 @@ const App = () => {
   };
 
   const handleDragStart = (event: DragStartEvent) => {
-    const { active } = event;
-    setActiveId(active.id.toString());
+    setActiveId(event.active.id.toString());
   };
 
-  const handleDragOver = (event: DragOverEvent) => {
-    const { active, over } = event;
-    const activeId = active.id.toString();
-    const overId = over?.id.toString();
-    if (!activeId || !overId || activeId === overId) {
-      return;
-    }
-
-    let updatedItems = [...items];
-
-    // getting active item
-    const activePath: string = active.data.current?.["path"] || "";
-    const activeResult = getItemAndParentByPath(updatedItems, activePath);
-    if (!activeResult) {
-      return;
-    }
-    const { item: activeItem, parent: activeParent } = activeResult;
-
-    // getting overItem item
-    const overPath: string = over?.data.current?.["path"] || "";
-    const overResult = getItemAndParentByPath(updatedItems, overPath);
-    if (!overResult) {
-      return;
-    }
-    const { item: overItem, parent: overParent } = overResult;
-
-    // we ignore dragging inside parent (just a sorting action)
-    // if (isDragingInsideParent(updatedItems, overId, activePath)) {
-    //   return;
-    // }
-
-    // edge case (avoid handling drag over for child nodes)
-    if (
-      "nodes" in activeItem &&
-      isDraggingOverDescendants(activeItem, overId)
-    ) {
-      return;
-    }
-
-    updatedItems = moveNestedItem(
-      updatedItems,
-      activeId,
-      overId,
-      activeItem,
-      overItem,
-      activeParent,
-      overParent
-    );
-    setItems(updatedItems);
-  };
-
-  const handleDragEnd = (event: DragEndEvent) => {
+  const handleDragMove = throttle((event: DragMoveEvent) => {
     const { active, over } = event;
     const activeId = active.id.toString();
     const overId = over?.id.toString();
@@ -145,6 +95,46 @@ const App = () => {
       return;
     }
 
+    if (
+      Math.abs(
+        (over?.rect.top || Number.MIN_SAFE_INTEGER) -
+          (active.rect.current.translated?.top || Number.MAX_SAFE_INTEGER)
+      ) < 20
+    ) {
+      updatedItems = moveNestedItem(
+        items,
+        activeId,
+        overId,
+        activeItem,
+        overItem,
+        activeParent,
+        overParent,
+        "before"
+      );
+      setItems(updatedItems);
+      return;
+    }
+
+    if (
+      Math.abs(
+        (over?.rect.bottom || Number.MIN_SAFE_INTEGER) -
+          (active.rect.current.translated?.bottom || Number.MAX_SAFE_INTEGER)
+      ) < 20
+    ) {
+      updatedItems = moveNestedItem(
+        items,
+        activeId,
+        overId,
+        activeItem,
+        overItem,
+        activeParent,
+        overParent,
+        "after"
+      );
+      setItems(updatedItems);
+      return;
+    }
+
     updatedItems = moveNestedItem(
       updatedItems,
       activeId,
@@ -155,6 +145,9 @@ const App = () => {
       overParent
     );
     setItems(updatedItems);
+  }, 500);
+
+  const handleDragEnd = (event: DragStartEvent) => {
     setActiveId(null);
   };
 
@@ -169,7 +162,7 @@ const App = () => {
     <DndContext
       sensors={sensors}
       onDragStart={handleDragStart}
-      onDragOver={handleDragOver}
+      onDragMove={handleDragMove}
       onDragEnd={handleDragEnd}
     >
       <SortableContext

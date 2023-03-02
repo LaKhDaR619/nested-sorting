@@ -28,54 +28,6 @@ export const getItemAndParentByPath = (
   return { parent, item: searchedItem };
 };
 
-// export const isDragingInsideParent = (
-//   items: ItemType[],
-//   overId: string,
-//   path: string
-// ) => {
-//   const pathIdsArray = path.split(":");
-
-//   // item is inside root
-//   if (pathIdsArray.length === 1) {
-//     return Boolean(
-//       items.find((item) => {
-//         return (
-//           // if the over item is a sibling
-//           item.id === overId &&
-//           // and not a container
-//           !("nodes" in item)
-//         );
-//       })
-//     );
-//   }
-
-//   // item is in a nested container
-//   let parent: MultipleNodes | undefined = items.find(
-//     (item) => item.id === pathIdsArray[0]
-//   ) as MultipleNodes;
-//   pathIdsArray.slice(1, -1).forEach((id) => {
-//     if (parent && "nodes" in parent) {
-//       parent = parent.nodes.find((node) => node.id === id) as MultipleNodes;
-//     }
-//   });
-
-//   if (
-//     parent?.id === overId ||
-//     parent.nodes.find((item) => {
-//       return (
-//         // if the over item is a sibling
-//         item.id === overId &&
-//         // and not a container
-//         !("nodes" in item)
-//       );
-//     })
-//   ) {
-//     return true;
-//   }
-
-//   return false;
-// };
-
 export const moveNestedItem = (
   items: ItemType[],
   activeId: string,
@@ -83,7 +35,9 @@ export const moveNestedItem = (
   activeItem: ItemType,
   overItem: ItemType,
   activeParent: MultipleNodes | null,
-  overParent: MultipleNodes | null
+  overParent: MultipleNodes | null,
+  // don't move to the over container, add it before or after it
+  addNextTo?: "before" | "after"
 ) => {
   // if they have the same parent (just sorting)
   if (activeParent?.id === overParent?.id && !("nodes" in overItem)) {
@@ -124,8 +78,19 @@ export const moveNestedItem = (
       items = items.filter((item) => item.id !== activeId);
     }
 
+    // if we need to put it next to the container
+    if (addNextTo) {
+      if (overParent) {
+        // if(addNextTo === '')
+        overParent.nodes.unshift(activeItem);
+      } else {
+        items.unshift(activeItem);
+      }
+    }
     // add it to the dragged over container
-    overItem.nodes.unshift(activeItem);
+    else {
+      overItem.nodes.unshift(activeItem);
+    }
 
     return JSON.parse(JSON.stringify(items));
   }

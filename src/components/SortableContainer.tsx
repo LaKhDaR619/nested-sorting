@@ -1,11 +1,13 @@
 import React, { PropsWithChildren } from "react";
 import {
   SortableContext,
+  useSortable,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 
-import SortableItem from "./SortableItem";
 import { ItemType } from "../App";
+import styled from "styled-components";
 
 interface SortableContainerProps {
   id: string;
@@ -13,15 +15,31 @@ interface SortableContainerProps {
   parentPath: string;
 }
 
+const StyledContainer = styled.div``;
+
 const SortableContainer: React.FC<
   PropsWithChildren<SortableContainerProps>
 > = ({ id, nodes, parentPath, children }) => {
+  const path = parentPath ? `${parentPath}:${id}` : id;
+
+  const { attributes, listeners, setNodeRef, transform, transition } =
+    useSortable({ id, data: { path } });
+
+  const style = {
+    transform: CSS.Translate.toString(transform),
+    transition,
+  };
+
   return (
-    <SortableItem id={id} parentPath={parentPath}>
+    <StyledContainer ref={setNodeRef} style={style}>
+      <button {...listeners} {...attributes}>
+        Drag handle
+      </button>
+      {path}
       <SortableContext items={nodes} strategy={verticalListSortingStrategy}>
         {children}
       </SortableContext>
-    </SortableItem>
+    </StyledContainer>
   );
 };
 
